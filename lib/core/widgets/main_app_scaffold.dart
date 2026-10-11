@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/providers/auth_provider.dart';
+import '../router/route_paths.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
@@ -163,6 +164,14 @@ class MainAppScaffold extends ConsumerWidget {
               onTap: () {
                 Navigator.pop(context);
                 _onDestinationSelected(0);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.people_alt_rounded),
+              title: const Text('B2B Customer Directory'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push(RoutePaths.customers);
               },
             ),
             ListTile(

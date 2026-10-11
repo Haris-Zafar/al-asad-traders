@@ -7,7 +7,10 @@ import '../../../core/services/pdf_invoice_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/pkr_formatter.dart';
+import '../../customers/models/customer_model.dart';
+import '../../customers/providers/customer_provider.dart';
 import '../../inventory/providers/inventory_provider.dart';
+import '../models/invoice_item_snapshot.dart';
 import '../providers/invoice_provider.dart';
 import '../widgets/scanner_modal.dart';
 
@@ -57,6 +60,101 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
     );
   }
 
+  void _showEditUnitPriceDialog(InvoiceItemSnapshot item) {
+    final cartState = ref.read(invoiceBuilderProvider);
+    final priceController =
+        TextEditingController(text: item.unitPricePkr.toString());
+    bool saveAsDefaultCustomerPrice = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('Edit Unit Price for ${item.productName}'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: priceController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Unit Wholesale Price (PKR)',
+                      prefixText: 'Rs. ',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  if (cartState.customerId != 'walk_in') ...[
+                    CheckboxListTile(
+                      value: saveAsDefaultCustomerPrice,
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        'Save as default wholesale price for ${cartState.customerName}',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      onChanged: (val) {
+                        setDialogState(() {
+                          saveAsDefaultCustomerPrice = val ?? false;
+                        });
+                      },
+                    ),
+                  ],
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final newPricePkr =
+                        PkrFormatter.parsePkr(priceController.text);
+                    if (newPricePkr != null && newPricePkr >= 0) {
+                      Navigator.pop(dialogContext);
+
+                      // 1. Update unit price in current invoice cart snapshot
+                      ref
+                          .read(invoiceBuilderProvider.notifier)
+                          .updateItemUnitPrice(item.productId, newPricePkr);
+
+                      // 2. If requested, save in product's customerPrices map for future invoices
+                      if (saveAsDefaultCustomerPrice &&
+                          cartState.customerId != 'walk_in') {
+                        await ref
+                            .read(inventoryControllerProvider.notifier)
+                            .setCustomerPrice(
+                              productId: item.productId,
+                              customerId: cartState.customerId,
+                              pricePkr: newPricePkr,
+                            );
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  'Saved ${PkrFormatter.format(newPricePkr)} as custom price for ${cartState.customerName}'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        }
+                      }
+                    }
+                  },
+                  child: const Text('Update Price'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _handleCompleteInvoice() async {
     final notifier = ref.read(invoiceBuilderProvider.notifier);
     final invoiceId = await notifier.submitInvoice();
@@ -66,7 +164,6 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
       notifier.clearCart();
 
       if (mounted && invoice != null) {
-        // Show Success Dialog with Direct PDF Print & WhatsApp Share Actions
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -127,6 +224,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
   Widget build(BuildContext context) {
     final cartState = ref.watch(invoiceBuilderProvider);
     final productsAsync = ref.watch(productsStreamProvider);
+    final customersAsync = ref.watch(customersStreamProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -219,7 +317,7 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                                 title: Text(product.name,
                                     style: AppTextStyles.titleSmall),
                                 subtitle: Text(
-                                  'Stock: ${product.currentStock} units | Barcode: ${product.barcode}',
+                                  'Stock: ${product.currentStock} units${product.note.isNotEmpty ? ' | ${product.note}' : ''}',
                                   style: AppTextStyles.bodySmall,
                                 ),
                                 trailing: Row(
@@ -270,20 +368,79 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                   Text('Invoice Summary', style: AppTextStyles.titleMedium),
                   const SizedBox(height: 12),
 
-                  // Customer Name Input
-                  TextFormField(
-                    initialValue: cartState.customerName,
-                    onChanged: (val) {
-                      ref.read(invoiceBuilderProvider.notifier).setCustomer(
-                            id: cartState.customerId,
-                            name: val.trim().isNotEmpty
-                                ? val.trim()
-                                : 'Walk-in Customer',
-                          );
+                  // Registered Customer Dropdown Selector
+                  customersAsync.when(
+                    data: (customers) {
+                      final customerOptions = [
+                        const CustomerModel(
+                          id: 'walk_in',
+                          name: 'Walk-in Customer',
+                          phone: '',
+                          email: '',
+                          address: '',
+                        ),
+                        ...customers,
+                      ];
+
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              initialValue: customerOptions.any(
+                                      (c) => c.id == cartState.customerId)
+                                  ? cartState.customerId
+                                  : 'walk_in',
+                              decoration: const InputDecoration(
+                                labelText: 'Select B2B Customer',
+                                prefixIcon: Icon(Icons.person_outline),
+                              ),
+                              items: customerOptions.map((customer) {
+                                return DropdownMenuItem<String>(
+                                  value: customer.id,
+                                  child: Text(
+                                    customer.name,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (selectedId) {
+                                if (selectedId != null) {
+                                  final selectedCustomer = customerOptions
+                                      .firstWhere((c) => c.id == selectedId);
+                                  ref
+                                      .read(invoiceBuilderProvider.notifier)
+                                      .setCustomer(
+                                        id: selectedCustomer.id,
+                                        name: selectedCustomer.name,
+                                      );
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton.filledTonal(
+                            onPressed: () => context.push(RoutePaths.customers),
+                            icon: const Icon(Icons.person_add_rounded),
+                            tooltip: 'Manage / Add Customer',
+                          ),
+                        ],
+                      );
                     },
-                    decoration: const InputDecoration(
-                      labelText: 'Customer Name / Supermarket',
-                      prefixIcon: Icon(Icons.person_outline),
+                    loading: () => const LinearProgressIndicator(),
+                    error: (_, __) => TextFormField(
+                      initialValue: cartState.customerName,
+                      onChanged: (val) {
+                        ref.read(invoiceBuilderProvider.notifier).setCustomer(
+                              id: cartState.customerId,
+                              name: val.trim().isNotEmpty
+                                  ? val.trim()
+                                  : 'Walk-in Customer',
+                            );
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Customer Name',
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -332,9 +489,24 @@ class _CreateInvoiceScreenState extends ConsumerState<CreateInvoiceScreen> {
                                         children: [
                                           Text(item.productName,
                                               style: AppTextStyles.titleSmall),
-                                          Text(
-                                            '${PkrFormatter.format(item.unitPricePkr)} / unit',
-                                            style: AppTextStyles.bodySmall,
+                                          Row(
+                                            children: [
+                                              Text(
+                                                '${PkrFormatter.format(item.unitPricePkr)} / unit',
+                                                style: AppTextStyles.bodySmall,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              InkWell(
+                                                onTap: () =>
+                                                    _showEditUnitPriceDialog(
+                                                        item),
+                                                child: const Icon(
+                                                  Icons.edit,
+                                                  size: 14,
+                                                  color: AppColors.primary,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),

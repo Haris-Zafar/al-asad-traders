@@ -80,6 +80,71 @@ class ProductDetailScreen extends ConsumerWidget {
     );
   }
 
+  void _showAddCustomerPriceDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ProductModel product,
+  ) {
+    final customerIdController = TextEditingController();
+    final priceController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Set Customer-Specific Wholesale Price'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: customerIdController,
+                decoration: const InputDecoration(
+                  labelText: 'Customer ID / Name',
+                  hintText: 'e.g. Metro Supermarket',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: priceController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Custom Wholesale Price (PKR)',
+                  hintText: '1180',
+                  prefixText: 'Rs. ',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final customerId = customerIdController.text.trim();
+                final pricePkr = PkrFormatter.parsePkr(priceController.text);
+
+                if (customerId.isNotEmpty && pricePkr != null && pricePkr >= 0) {
+                  Navigator.pop(dialogContext);
+                  ref
+                      .read(inventoryControllerProvider.notifier)
+                      .setCustomerPrice(
+                        productId: product.id,
+                        customerId: customerId,
+                        pricePkr: pricePkr,
+                      );
+                  ref.invalidate(productDetailProvider(product.id));
+                }
+              },
+              child: const Text('Save Custom Price'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productAsync = ref.watch(productDetailProvider(productId));
@@ -117,12 +182,13 @@ class ProductDetailScreen extends ConsumerWidget {
           }
 
           final lowestCostPkr = product.lowestSupplierCostPkr;
+          final sortedSuppliers = product.sortedSupplierCosts;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
+                constraints: const BoxConstraints(maxWidth: 650),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -139,8 +205,8 @@ class ProductDetailScreen extends ConsumerWidget {
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
                                   child: Container(
-                                    width: 80,
-                                    height: 80,
+                                    width: 84,
+                                    height: 84,
                                     color: AppColors.primaryContainer,
                                     child: product.imageUrl != null &&
                                             product.imageUrl!.isNotEmpty
@@ -174,6 +240,16 @@ class ProductDetailScreen extends ConsumerWidget {
                                         'Barcode: ${product.barcode.isNotEmpty ? product.barcode : 'None'}',
                                         style: AppTextStyles.bodySmall,
                                       ),
+                                      if (product.note.isNotEmpty) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Note: ${product.note}',
+                                          style: AppTextStyles.bodySmall.copyWith(
+                                            color: AppColors.textSecondary,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ],
                                       const SizedBox(height: 8),
 
                                       // Archive Toggle
@@ -241,7 +317,7 @@ class ProductDetailScreen extends ConsumerWidget {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Wholesale Price',
+                                    Text('Default Wholesale',
                                         style: AppTextStyles.bodySmall),
                                     Text(
                                       PkrFormatter.format(
@@ -285,7 +361,7 @@ class ProductDetailScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 16),
 
-                    // Supplier Costs Card (Sub-task 3.4)
+                    // Supplier Costs Card (Sorted with MINIMUM COST ON TOP)
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
@@ -306,17 +382,17 @@ class ProductDetailScreen extends ConsumerWidget {
                                     product,
                                   ),
                                   icon: const Icon(Icons.add),
-                                  label: const Text('Add Cost'),
+                                  label: const Text('Add Supplier Cost'),
                                 ),
                               ],
                             ),
                             const Divider(height: 16),
 
-                            if (product.supplierCosts.isEmpty) ...[
+                            if (sortedSuppliers.isEmpty) ...[
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
                                 child: Text(
-                                  'No supplier costs recorded yet. Link suppliers to track margins.',
+                                  'No supplier costs recorded yet.',
                                   style: AppTextStyles.bodySmall,
                                 ),
                               ),
@@ -324,16 +400,14 @@ class ProductDetailScreen extends ConsumerWidget {
                               ListView.separated(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                itemCount: product.supplierCosts.length,
+                                itemCount: sortedSuppliers.length,
                                 separatorBuilder: (_, __) =>
-                                    const Divider(height: 12),
+                                    const Divider(height: 8),
                                 itemBuilder: (context, index) {
-                                  final supplierId = product
-                                      .supplierCosts.keys
-                                      .elementAt(index);
-                                  final costPkr =
-                                      product.supplierCosts[supplierId]!;
-                                  final isLowest = costPkr == lowestCostPkr;
+                                  final entry = sortedSuppliers[index];
+                                  final supplierId = entry.key;
+                                  final costPkr = entry.value;
+                                  final isLowest = index == 0 || costPkr == lowestCostPkr;
 
                                   return ListTile(
                                     contentPadding: EdgeInsets.zero,
@@ -343,7 +417,7 @@ class ProductDetailScreen extends ConsumerWidget {
                                     ),
                                     subtitle: isLowest
                                         ? Text(
-                                            'Lowest Cost Option',
+                                            'Minimum Cost Option',
                                             style: AppTextStyles.labelSmall
                                                 .copyWith(
                                               color: AppColors.success,
@@ -361,6 +435,9 @@ class ProductDetailScreen extends ConsumerWidget {
                                             color: isLowest
                                                 ? AppColors.success
                                                 : AppColors.textPrimary,
+                                            fontWeight: isLowest
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
                                           ),
                                         ),
                                         IconButton(
@@ -384,6 +461,77 @@ class ProductDetailScreen extends ConsumerWidget {
                                           },
                                         ),
                                       ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Customer-Specific Wholesale Prices Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Customer-Specific Wholesale Prices',
+                                  style: AppTextStyles.titleMedium,
+                                ),
+                                TextButton.icon(
+                                  onPressed: () => _showAddCustomerPriceDialog(
+                                    context,
+                                    ref,
+                                    product,
+                                  ),
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Add Custom Price'),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 16),
+
+                            if (product.customerPrices.isEmpty) ...[
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                child: Text(
+                                  'No customer-specific prices configured. Default wholesale price (${PkrFormatter.format(product.defaultWholesalePricePkr)}) applies.',
+                                  style: AppTextStyles.bodySmall,
+                                ),
+                              ),
+                            ] else ...[
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: product.customerPrices.length,
+                                separatorBuilder: (_, __) =>
+                                    const Divider(height: 8),
+                                itemBuilder: (context, index) {
+                                  final custId = product.customerPrices.keys
+                                      .elementAt(index);
+                                  final customPricePkr =
+                                      product.customerPrices[custId]!;
+
+                                  return ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: Text(
+                                      custId,
+                                      style: AppTextStyles.titleSmall,
+                                    ),
+                                    trailing: Text(
+                                      PkrFormatter.format(customPricePkr),
+                                      style: AppTextStyles.titleMedium.copyWith(
+                                        color: AppColors.success,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   );
                                 },

@@ -73,9 +73,6 @@ class InvoiceBuilderNotifier extends StateNotifier<InvoiceCartState> {
       customerId: id,
       customerName: name,
     );
-
-    // Re-evaluate unit prices for existing items based on customer-specific prices
-    // (Note: snapshots remain locked upon adding, but customer change refreshes current cart preview)
   }
 
   void addProductToCart(ProductModel product, {int quantity = 1}) {
@@ -98,6 +95,17 @@ class InvoiceBuilderNotifier extends StateNotifier<InvoiceCartState> {
       );
       state = state.copyWith(items: [...state.items, newItem]);
     }
+  }
+
+  void updateItemUnitPrice(String productId, int newPricePkr) {
+    final updatedItems = state.items.map((item) {
+      if (item.productId == productId) {
+        return item.copyWith(unitPricePkr: newPricePkr);
+      }
+      return item;
+    }).toList();
+
+    state = state.copyWith(items: updatedItems);
   }
 
   void updateQuantity(String productId, int newQuantity) {

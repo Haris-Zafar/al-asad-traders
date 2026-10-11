@@ -11,6 +11,9 @@ abstract class RoutePaths {
   static const String editProduct = '/inventory/edit/:id';
   static const String productDetail = '/inventory/detail/:id';
 
+  // Customers
+  static const String customers = '/customers';
+
   // Invoices
   static const String invoices = '/invoices';
   static const String createInvoice = '/invoices/create';

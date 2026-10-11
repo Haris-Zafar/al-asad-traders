@@ -80,6 +80,7 @@ class InventoryController extends StateNotifier<InventoryControllerState> {
     required int defaultWholesalePricePkr,
     required int retailPricePkr,
     required int currentStock,
+    String note = '',
     String? localImagePath,
     List<int>? imageBytes,
     String? existingImageUrl,
@@ -106,6 +107,7 @@ class InventoryController extends StateNotifier<InventoryControllerState> {
         defaultWholesalePricePkr: defaultWholesalePricePkr,
         retailPricePkr: retailPricePkr,
         currentStock: currentStock,
+        note: note.trim(),
         imageUrl: imageUrl,
         createdAt: DateTime.now(),
       );
@@ -168,6 +170,22 @@ class InventoryController extends StateNotifier<InventoryControllerState> {
       );
     } catch (e) {
       state = state.copyWith(errorMessage: 'Failed to remove supplier cost: $e');
+    }
+  }
+
+  Future<void> setCustomerPrice({
+    required String productId,
+    required String customerId,
+    required int pricePkr,
+  }) async {
+    try {
+      await _service.setCustomerPrice(
+        productId: productId,
+        customerId: customerId,
+        pricePkr: pricePkr,
+      );
+    } catch (e) {
+      state = state.copyWith(errorMessage: 'Failed to save customer price: $e');
     }
   }
 }

@@ -12,6 +12,7 @@ import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/inventory/screens/inventory_list_screen.dart';
 import '../../features/inventory/screens/add_product_screen.dart';
 import '../../features/inventory/screens/product_detail_screen.dart';
+import '../../features/customers/screens/customer_list_screen.dart';
 import '../../features/invoices/screens/invoice_list_screen.dart';
 import '../../features/invoices/screens/create_invoice_screen.dart';
 import '../../features/invoices/screens/invoice_detail_screen.dart';
@@ -69,6 +70,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         final wholesalerPaths = [
           RoutePaths.dashboard,
           RoutePaths.inventory,
+          RoutePaths.customers,
           RoutePaths.invoices,
           RoutePaths.suppliers,
           RoutePaths.b2bFulfillment,
@@ -102,12 +104,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return MainAppScaffold(navigationShell: navigationShell);
         },
         branches: [
-          // Branch 0: Dashboard
+          // Branch 0: Dashboard & Customers
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: RoutePaths.dashboard,
                 builder: (context, state) => const DashboardScreen(),
+              ),
+              GoRoute(
+                path: RoutePaths.customers,
+                builder: (context, state) => const CustomerListScreen(),
               ),
             ],
           ),

@@ -25,6 +25,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
   final _wholesalePriceController = TextEditingController();
   final _retailPriceController = TextEditingController();
   final _stockController = TextEditingController();
+  final _noteController = TextEditingController();
 
   String? _existingImageUrl;
   bool _isInitialLoaded = false;
@@ -36,6 +37,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
     _wholesalePriceController.dispose();
     _retailPriceController.dispose();
     _stockController.dispose();
+    _noteController.dispose();
     super.dispose();
   }
 
@@ -47,6 +49,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
           product.defaultWholesalePricePkr.toString();
       _retailPriceController.text = product.retailPricePkr.toString();
       _stockController.text = product.currentStock.toString();
+      _noteController.text = product.note;
       _existingImageUrl = product.imageUrl;
       _isInitialLoaded = true;
     }
@@ -123,6 +126,7 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
             defaultWholesalePricePkr: wholesalePkr,
             retailPricePkr: retailPkr,
             currentStock: stock,
+            note: _noteController.text,
             existingImageUrl: _existingImageUrl,
           );
 
@@ -293,6 +297,18 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
                       }
                       return null;
                     },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Product Note / Description
+                  TextFormField(
+                    controller: _noteController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Product Note / Description (Optional)',
+                      hintText: 'e.g. Super Kernel 2026 Batch, Premium Quality Bag',
+                      prefixIcon: Icon(Icons.note_alt_outlined),
+                    ),
                   ),
                   const SizedBox(height: 24),
 

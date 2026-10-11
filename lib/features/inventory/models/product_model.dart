@@ -10,6 +10,7 @@ class ProductModel {
   final int currentStock;
   final bool isArchived;
   final String? imageUrl;
+  final String note; // Optional product note / description / specifications
   final Map<String, int> supplierCosts; // supplierId -> costPkr
   final Map<String, int> customerPrices; // customerId -> customPkr
   final DateTime? createdAt;
@@ -23,6 +24,7 @@ class ProductModel {
     required this.currentStock,
     this.isArchived = false,
     this.imageUrl,
+    this.note = '',
     this.supplierCosts = const {},
     this.customerPrices = const {},
     this.createdAt,
@@ -33,7 +35,9 @@ class ProductModel {
 
   /// Returns effective wholesale price for a specific customer ID, or default wholesale price
   int getWholesalePriceForCustomer(String? customerId) {
-    if (customerId != null && customerPrices.containsKey(customerId)) {
+    if (customerId != null &&
+        customerId.isNotEmpty &&
+        customerPrices.containsKey(customerId)) {
       return customerPrices[customerId]!;
     }
     return defaultWholesalePricePkr;
@@ -49,6 +53,13 @@ class ProductModel {
       }
     }
     return lowest;
+  }
+
+  /// Returns supplier costs sorted with the minimum cost on top
+  List<MapEntry<String, int>> get sortedSupplierCosts {
+    final entries = supplierCosts.entries.toList();
+    entries.sort((a, b) => a.value.compareTo(b.value));
+    return entries;
   }
 
   factory ProductModel.fromMap(Map<String, dynamic> map, String documentId) {
@@ -76,6 +87,7 @@ class ProductModel {
       currentStock: (map['currentStock'] as num?)?.toInt() ?? 0,
       isArchived: map['isArchived'] as bool? ?? false,
       imageUrl: map['imageUrl'] as String?,
+      note: map['note'] as String? ?? '',
       supplierCosts: supplierCostsMap,
       customerPrices: customerPricesMap,
       createdAt: map['createdAt'] != null
@@ -93,6 +105,7 @@ class ProductModel {
       'currentStock': currentStock,
       'isArchived': isArchived,
       'imageUrl': imageUrl,
+      'note': note,
       'supplierCosts': supplierCosts,
       'customerPrices': customerPrices,
       'createdAt': createdAt != null
@@ -110,6 +123,7 @@ class ProductModel {
     int? currentStock,
     bool? isArchived,
     String? imageUrl,
+    String? note,
     Map<String, int>? supplierCosts,
     Map<String, int>? customerPrices,
     DateTime? createdAt,
@@ -124,6 +138,7 @@ class ProductModel {
       currentStock: currentStock ?? this.currentStock,
       isArchived: isArchived ?? this.isArchived,
       imageUrl: imageUrl ?? this.imageUrl,
+      note: note ?? this.note,
       supplierCosts: supplierCosts ?? this.supplierCosts,
       customerPrices: customerPrices ?? this.customerPrices,
       createdAt: createdAt ?? this.createdAt,
