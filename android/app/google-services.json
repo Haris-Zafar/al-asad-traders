@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1047056697136",
+    "project_id": "al-asad-traders",
+    "storage_bucket": "al-asad-traders.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1047056697136:android:5778ea370582b38f462af5",
+        "android_client_info": {
+          "package_name": "com.example.al_asad_traders"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBS0ELucF1GyWHsY6Jk_9pUSWzHDvfcPjM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
