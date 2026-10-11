@@ -28,35 +28,39 @@ final currentUserModelProvider = FutureProvider<UserModel?>((ref) async {
   return await authService.getUserProfile(user.uid);
 });
 
-/// State for Auth Actions (e.g. Login)
+/// State for Auth Actions (e.g. Login, Register)
 class AuthControllerState {
   final bool isLoading;
   final String? errorMessage;
+  final String? successMessage;
 
   const AuthControllerState({
     this.isLoading = false,
     this.errorMessage,
+    this.successMessage,
   });
 
   AuthControllerState copyWith({
     bool? isLoading,
     String? errorMessage,
+    String? successMessage,
   }) {
     return AuthControllerState(
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
+      successMessage: successMessage,
     );
   }
 }
 
-/// Controller for performing login & logout actions
+/// Controller for performing login, signup & logout actions
 class AuthController extends StateNotifier<AuthControllerState> {
   final FirebaseAuthService _authService;
 
   AuthController(this._authService) : super(const AuthControllerState());
 
   Future<bool> login(String email, String password) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    state = state.copyWith(isLoading: true, errorMessage: null, successMessage: null);
     try {
       await _authService.signInWithEmailAndPassword(
         email: email,
@@ -68,6 +72,63 @@ class AuthController extends StateNotifier<AuthControllerState> {
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.message ?? 'Authentication failed.',
+      );
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'An unexpected error occurred: $e',
+      );
+      return false;
+    }
+  }
+
+  Future<bool> signUp({
+    required String email,
+    required String password,
+    required String name,
+    required UserRole role,
+    String? phoneNumber,
+  }) async {
+    state = state.copyWith(isLoading: true, errorMessage: null, successMessage: null);
+    try {
+      await _authService.signUpWithEmailAndPassword(
+        email: email,
+        password: password,
+        name: name,
+        role: role,
+        phoneNumber: phoneNumber,
+      );
+      state = state.copyWith(isLoading: false);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.message ?? 'Registration failed.',
+      );
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'An unexpected error occurred: $e',
+      );
+      return false;
+    }
+  }
+
+  Future<bool> resetPassword(String email) async {
+    state = state.copyWith(isLoading: true, errorMessage: null, successMessage: null);
+    try {
+      await _authService.sendPasswordResetEmail(email);
+      state = state.copyWith(
+        isLoading: false,
+        successMessage: 'Password reset link sent to your email.',
+      );
+      return true;
+    } on FirebaseAuthException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.message ?? 'Failed to send reset email.',
       );
       return false;
     } catch (e) {

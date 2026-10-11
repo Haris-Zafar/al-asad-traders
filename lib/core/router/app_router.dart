@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'route_paths.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
+import '../../features/auth/screens/signup_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/inventory/screens/inventory_list_screen.dart';
 import '../../features/inventory/screens/add_product_screen.dart';
@@ -45,15 +46,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final user = authState.asData?.value;
       final userModel = userModelAsync.asData?.value;
 
-      final isLoggingIn = state.matchedLocation == RoutePaths.login;
+      final isAuthPage = state.matchedLocation == RoutePaths.login ||
+          state.matchedLocation == RoutePaths.signup;
 
-      // 1. Not logged in -> Redirect to login screen
+      // 1. Not logged in -> Redirect to login screen if attempting to access protected route
       if (user == null) {
-        return isLoggingIn ? null : RoutePaths.login;
+        return isAuthPage ? null : RoutePaths.login;
       }
 
-      // 2. Logged in and trying to go to login screen or initial path
-      if (isLoggingIn || state.matchedLocation == RoutePaths.initial) {
+      // 2. Logged in and trying to go to login/signup or initial root
+      if (isAuthPage || state.matchedLocation == RoutePaths.initial) {
         if (userModel != null && userModel.isCustomer) {
           return RoutePaths.b2bCatalog;
         }
@@ -85,6 +87,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.login,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.signup,
+        builder: (context, state) => const SignupScreen(),
       ),
       GoRoute(
         path: RoutePaths.dashboard,

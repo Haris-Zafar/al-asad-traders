@@ -28,6 +28,20 @@ class MockFirebaseAuthService implements FirebaseAuthService {
   }
 
   @override
+  Future<UserCredential> signUpWithEmailAndPassword({
+    required String email,
+    required String password,
+    required String name,
+    required UserRole role,
+    String? phoneNumber,
+  }) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {}
+
+  @override
   Future<void> signOut() async {}
 }
 

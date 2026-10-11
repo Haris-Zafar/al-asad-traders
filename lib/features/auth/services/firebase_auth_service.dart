@@ -23,6 +23,40 @@ class FirebaseAuthService {
     );
   }
 
+  /// Register new user with email, password, profile details, and role
+  Future<UserCredential> signUpWithEmailAndPassword({
+    required String email,
+    required String password,
+    required String name,
+    required UserRole role,
+    String? phoneNumber,
+  }) async {
+    final credential = await _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password.trim(),
+    );
+
+    if (credential.user != null) {
+      final newUser = UserModel(
+        id: credential.user!.uid,
+        email: email.trim(),
+        name: name.trim(),
+        role: role,
+        phoneNumber: phoneNumber?.trim(),
+        createdAt: DateTime.now(),
+      );
+
+      await saveUserProfile(newUser);
+    }
+
+    return credential;
+  }
+
+  /// Send password reset email
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _auth.sendPasswordResetEmail(email: email.trim());
+  }
+
   /// Sign out
   Future<void> signOut() async {
     await _auth.signOut();
