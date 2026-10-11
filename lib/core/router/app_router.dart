@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'route_paths.dart';
+import '../widgets/main_app_scaffold.dart';
+import '../widgets/customer_app_scaffold.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/signup_screen.dart';
@@ -84,6 +86,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
+      // Auth Routes
       GoRoute(
         path: RoutePaths.login,
         builder: (context, state) => const LoginScreen(),
@@ -92,72 +95,123 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.signup,
         builder: (context, state) => const SignupScreen(),
       ),
-      GoRoute(
-        path: RoutePaths.dashboard,
-        builder: (context, state) => const DashboardScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.inventory,
-        builder: (context, state) => const InventoryListScreen(),
-        routes: [
-          GoRoute(
-            path: 'add',
-            builder: (context, state) => const AddProductScreen(),
+
+      // Wholesaler Stateful Navigation Shell
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return MainAppScaffold(navigationShell: navigationShell);
+        },
+        branches: [
+          // Branch 0: Dashboard
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.dashboard,
+                builder: (context, state) => const DashboardScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: 'edit/:id',
-            builder: (context, state) {
-              final id = state.pathParameters['id'];
-              return AddProductScreen(productId: id);
-            },
+          // Branch 1: Inventory Management
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.inventory,
+                builder: (context, state) => const InventoryListScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    builder: (context, state) => const AddProductScreen(),
+                  ),
+                  GoRoute(
+                    path: 'edit/:id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id'];
+                      return AddProductScreen(productId: id);
+                    },
+                  ),
+                  GoRoute(
+                    path: 'detail/:id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id'] ?? '';
+                      return ProductDetailScreen(productId: id);
+                    },
+                  ),
+                ],
+              ),
+            ],
           ),
-          GoRoute(
-            path: 'detail/:id',
-            builder: (context, state) {
-              final id = state.pathParameters['id'] ?? '';
-              return ProductDetailScreen(productId: id);
-            },
+          // Branch 2: Invoices
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.invoices,
+                builder: (context, state) => const InvoiceListScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'create',
+                    builder: (context, state) => const CreateInvoiceScreen(),
+                  ),
+                  GoRoute(
+                    path: 'detail/:id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id'] ?? '';
+                      return InvoiceDetailScreen(invoiceId: id);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 3: Suppliers
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.suppliers,
+                builder: (context, state) => const SupplierListScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'purchase-list',
+                    builder: (context, state) => const PurchaseListScreen(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 4: B2B Order Fulfillment
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.b2bFulfillment,
+                builder: (context, state) => const B2bFulfillmentScreen(),
+              ),
+            ],
           ),
         ],
       ),
-      GoRoute(
-        path: RoutePaths.invoices,
-        builder: (context, state) => const InvoiceListScreen(),
-        routes: [
-          GoRoute(
-            path: 'create',
-            builder: (context, state) => const CreateInvoiceScreen(),
+
+      // Customer B2B Portal Stateful Shell
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return CustomerAppScaffold(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.b2bCatalog,
+                builder: (context, state) => const CustomerCatalogScreen(),
+              ),
+            ],
           ),
-          GoRoute(
-            path: 'detail/:id',
-            builder: (context, state) {
-              final id = state.pathParameters['id'] ?? '';
-              return InvoiceDetailScreen(invoiceId: id);
-            },
-          ),
-        ],
-      ),
-      GoRoute(
-        path: RoutePaths.suppliers,
-        builder: (context, state) => const SupplierListScreen(),
-        routes: [
-          GoRoute(
-            path: 'purchase-list',
-            builder: (context, state) => const PurchaseListScreen(),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePaths.b2bLedger,
+                builder: (context, state) => const LedgerScreen(),
+              ),
+            ],
           ),
         ],
-      ),
-      GoRoute(
-        path: RoutePaths.b2bCatalog,
-        builder: (context, state) => const CustomerCatalogScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.b2bLedger,
-        builder: (context, state) => const LedgerScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.b2bFulfillment,
-        builder: (context, state) => const B2bFulfillmentScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
