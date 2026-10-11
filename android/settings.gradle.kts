@@ -1,3 +1,16 @@
+// Fix for AGP conflict when both ANDROID_PREFS_ROOT and ANDROID_USER_HOME are present in environment
+try {
+    val processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment")
+    val theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment").apply { isAccessible = true }
+    @Suppress("UNCHECKED_CAST")
+    (theEnvironmentField.get(null) as? MutableMap<String, String>)?.remove("ANDROID_PREFS_ROOT")
+
+    val theCaseInsensitiveEnvironmentField = processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment").apply { isAccessible = true }
+    @Suppress("UNCHECKED_CAST")
+    (theCaseInsensitiveEnvironmentField.get(null) as? MutableMap<String, String>)?.remove("ANDROID_PREFS_ROOT")
+} catch (_: Exception) {
+}
+
 pluginManagement {
     val flutterSdkPath =
         run {
