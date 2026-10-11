@@ -12,8 +12,8 @@ class SupplierModel {
   const SupplierModel({
     required this.id,
     required this.name,
-    required this.phone,
-    required this.address,
+    this.phone = '',
+    this.address = '',
     this.catalogNotes = '',
     this.createdAt,
   });

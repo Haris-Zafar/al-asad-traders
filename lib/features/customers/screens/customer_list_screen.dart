@@ -54,7 +54,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                     controller: phoneController,
                     keyboardType: TextInputType.phone,
                     decoration: const InputDecoration(
-                      labelText: 'Phone Number',
+                      labelText: 'Phone Number (Optional)',
                       hintText: '0300 9876543',
                       prefixIcon: Icon(Icons.phone_outlined),
                     ),
@@ -64,7 +64,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                     controller: emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
-                      labelText: 'Email Address',
+                      labelText: 'Email Address (Optional)',
                       hintText: 'metro@supermarket.com',
                       prefixIcon: Icon(Icons.email_outlined),
                     ),
@@ -73,7 +73,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                   TextFormField(
                     controller: addressController,
                     decoration: const InputDecoration(
-                      labelText: 'Business Address',
+                      labelText: 'Business Address (Optional)',
                       hintText: 'Main Boulevard, Lahore',
                       prefixIcon: Icon(Icons.location_on_outlined),
                     ),

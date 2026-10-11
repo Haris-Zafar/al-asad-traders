@@ -43,7 +43,7 @@ class SupplierListScreen extends ConsumerWidget {
                     controller: phoneController,
                     keyboardType: TextInputType.phone,
                     decoration: const InputDecoration(
-                      labelText: 'Phone Number',
+                      labelText: 'Phone Number (Optional)',
                       hintText: '0300 1234567',
                     ),
                   ),
@@ -51,7 +51,7 @@ class SupplierListScreen extends ConsumerWidget {
                   TextFormField(
                     controller: addressController,
                     decoration: const InputDecoration(
-                      labelText: 'Address / Location',
+                      labelText: 'Address / Location (Optional)',
                       hintText: 'Grain Market, Faisalabad',
                     ),
                   ),

@@ -13,9 +13,9 @@ class CustomerModel {
   const CustomerModel({
     required this.id,
     required this.name,
-    required this.phone,
-    required this.email,
-    required this.address,
+    this.phone = '',
+    this.email = '',
+    this.address = '',
     this.outstandingBalancePkr = 0,
     this.createdAt,
   });
