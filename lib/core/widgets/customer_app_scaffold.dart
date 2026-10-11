@@ -56,12 +56,27 @@ class CustomerAppScaffold extends ConsumerWidget {
       appBar: AppBar(
         title: Row(
           children: [
-            Image.asset(
-              'assets/images/app_logo.png',
-              height: 32,
-              errorBuilder: (_, __, ___) => const Icon(
-                Icons.storefront_rounded,
-                color: AppColors.textOnPrimary,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Image.asset(
+                'assets/images/app_logo.png',
+                height: 28,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.storefront_rounded,
+                  color: AppColors.primary,
+                ),
               ),
             ),
             const SizedBox(width: 10),

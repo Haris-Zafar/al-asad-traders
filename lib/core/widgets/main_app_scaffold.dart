@@ -56,25 +56,28 @@ class MainAppScaffold extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Image.asset(
-              'assets/images/app_logo.png',
-              height: 32,
-              errorBuilder: (_, __, ___) => const Icon(
-                Icons.store_mall_directory_rounded,
-                color: AppColors.textOnPrimary,
+        title: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 4,
+                offset: Offset(0, 2),
               ),
+            ],
+          ),
+          child: Image.asset(
+            'assets/images/app_logo.png',
+            height: 28,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const Icon(
+              Icons.store_mall_directory_rounded,
+              color: AppColors.primary,
             ),
-            const SizedBox(width: 10),
-            Text(
-              'Al Asad Traders',
-              style: AppTextStyles.titleMedium.copyWith(
-                color: AppColors.textOnPrimary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
+          ),
         ),
         actions: [
           // User Profile Chip
@@ -125,11 +128,15 @@ class MainAppScaffold extends ConsumerWidget {
           children: [
             UserAccountsDrawerHeader(
               decoration: const BoxDecoration(color: AppColors.primary),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: AppColors.surface,
+              currentAccountPicture: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: Image.asset(
                   'assets/images/app_logo.png',
-                  height: 40,
+                  fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) => const Icon(
                     Icons.store_mall_directory_rounded,
                     color: AppColors.primary,
@@ -167,14 +174,6 @@ class MainAppScaffold extends ConsumerWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.people_alt_rounded),
-              title: const Text('B2B Customer Directory'),
-              onTap: () {
-                Navigator.pop(context);
-                context.push(RoutePaths.customers);
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.inventory_2_rounded),
               title: const Text('Inventory Management'),
               selected: navigationShell.currentIndex == 1,
@@ -193,23 +192,38 @@ class MainAppScaffold extends ConsumerWidget {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.local_shipping_rounded),
-              title: const Text('Suppliers & Purchases'),
+              leading: const Icon(Icons.assignment_turned_in_rounded),
+              title: const Text('B2B Order Fulfillment'),
               selected: navigationShell.currentIndex == 3,
               onTap: () {
                 Navigator.pop(context);
                 _onDestinationSelected(3);
               },
             ),
+            const Divider(),
+
+            // Master Directories Section (Customers & Suppliers)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text('Master Directories', style: AppTextStyles.labelSmall),
+            ),
             ListTile(
-              leading: const Icon(Icons.assignment_turned_in_rounded),
-              title: const Text('B2B Order Fulfillment'),
-              selected: navigationShell.currentIndex == 4,
+              leading: const Icon(Icons.people_alt_rounded),
+              title: const Text('B2B Customer Directory'),
               onTap: () {
                 Navigator.pop(context);
-                _onDestinationSelected(4);
+                context.push(RoutePaths.customers);
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.local_shipping_rounded),
+              title: const Text('Supplier Directory & Purchases'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push(RoutePaths.suppliers);
+              },
+            ),
+
             const Spacer(),
             const Divider(),
             ListTile(
@@ -253,11 +267,6 @@ class MainAppScaffold extends ConsumerWidget {
                       label: Text('Invoices'),
                     ),
                     NavigationRailDestination(
-                      icon: Icon(Icons.local_shipping_outlined),
-                      selectedIcon: Icon(Icons.local_shipping_rounded, color: AppColors.primary),
-                      label: Text('Suppliers'),
-                    ),
-                    NavigationRailDestination(
                       icon: Icon(Icons.assignment_outlined),
                       selectedIcon: Icon(Icons.assignment_turned_in_rounded, color: AppColors.primary),
                       label: Text('B2B Orders'),
@@ -293,14 +302,9 @@ class MainAppScaffold extends ConsumerWidget {
                   label: 'Invoices',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.local_shipping_outlined),
-                  selectedIcon: Icon(Icons.local_shipping_rounded, color: AppColors.primary),
-                  label: 'Suppliers',
-                ),
-                NavigationDestination(
                   icon: Icon(Icons.assignment_outlined),
                   selectedIcon: Icon(Icons.assignment_turned_in_rounded, color: AppColors.primary),
-                  label: 'Orders',
+                  label: 'B2B Orders',
                 ),
               ],
             ),

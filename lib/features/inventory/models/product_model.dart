@@ -6,10 +6,11 @@ class ProductModel {
   final String name;
   final String barcode;
   final int defaultWholesalePricePkr; // Strict integer PKR
+  final int defaultCostPricePkr; // Explicit default purchase/cost price in PKR
   final int retailPricePkr; // Strict integer PKR
   final int currentStock;
   final bool isArchived;
-  final String? imageUrl;
+  final String? imageUrl; // Optional product image URL
   final String note; // Optional product note / description / specifications
   final Map<String, int> supplierCosts; // supplierId -> costPkr
   final Map<String, int> customerPrices; // customerId -> customPkr
@@ -20,6 +21,7 @@ class ProductModel {
     required this.name,
     required this.barcode,
     required this.defaultWholesalePricePkr,
+    this.defaultCostPricePkr = 0,
     required this.retailPricePkr,
     required this.currentStock,
     this.isArchived = false,
@@ -43,16 +45,18 @@ class ProductModel {
     return defaultWholesalePricePkr;
   }
 
-  /// Returns lowest purchase cost among recorded suppliers, or null if none
+  /// Returns lowest purchase cost among recorded suppliers, or default cost price
   int? get lowestSupplierCostPkr {
-    if (supplierCosts.isEmpty) return null;
-    int? lowest;
-    for (final cost in supplierCosts.values) {
-      if (lowest == null || cost < lowest) {
-        lowest = cost;
+    if (supplierCosts.isNotEmpty) {
+      int? lowest;
+      for (final cost in supplierCosts.values) {
+        if (lowest == null || cost < lowest) {
+          lowest = cost;
+        }
       }
+      return lowest;
     }
-    return lowest;
+    return defaultCostPricePkr > 0 ? defaultCostPricePkr : null;
   }
 
   /// Returns supplier costs sorted with the minimum cost on top
@@ -83,6 +87,7 @@ class ProductModel {
       barcode: map['barcode'] as String? ?? '',
       defaultWholesalePricePkr:
           (map['defaultWholesalePricePkr'] as num?)?.toInt() ?? 0,
+      defaultCostPricePkr: (map['defaultCostPricePkr'] as num?)?.toInt() ?? 0,
       retailPricePkr: (map['retailPricePkr'] as num?)?.toInt() ?? 0,
       currentStock: (map['currentStock'] as num?)?.toInt() ?? 0,
       isArchived: map['isArchived'] as bool? ?? false,
@@ -101,6 +106,7 @@ class ProductModel {
       'name': name,
       'barcode': barcode,
       'defaultWholesalePricePkr': defaultWholesalePricePkr,
+      'defaultCostPricePkr': defaultCostPricePkr,
       'retailPricePkr': retailPricePkr,
       'currentStock': currentStock,
       'isArchived': isArchived,
@@ -119,6 +125,7 @@ class ProductModel {
     String? name,
     String? barcode,
     int? defaultWholesalePricePkr,
+    int? defaultCostPricePkr,
     int? retailPricePkr,
     int? currentStock,
     bool? isArchived,
@@ -134,6 +141,7 @@ class ProductModel {
       barcode: barcode ?? this.barcode,
       defaultWholesalePricePkr:
           defaultWholesalePricePkr ?? this.defaultWholesalePricePkr,
+      defaultCostPricePkr: defaultCostPricePkr ?? this.defaultCostPricePkr,
       retailPricePkr: retailPricePkr ?? this.retailPricePkr,
       currentStock: currentStock ?? this.currentStock,
       isArchived: isArchived ?? this.isArchived,
